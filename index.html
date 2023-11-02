@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Connect 4</title>
+	<style>
+		.board {
+			border-collapse: separate;
+			border-spacing: 30px;
+			position: absolute;
+			margin-left: auto;
+			margin-right: auto;
+			left: 0;
+			right: 0;
+			top: 150px;
+			text-align: center;
+			width: 50%;
+			aspect-ratio: 7/6;
+			background-color: blue;
+            border-radius: 50px;
+			box-shadow: 7px 7px 7px 7px rgba(0, 0, 0, 0.2);
+		}
+
+		.eval {
+			border-collapse: separate;
+			border-spacing: 30px;
+			margin: auto;
+			width: 50%;
+			text-align: center;
+			font-size: 40px;
+			font-size-adjust: .5;
+		}
+
+		.cell {
+			background-color: white;
+			border-radius: 70px;
+			height: 1/7 * 100%;
+			aspect-ratio: 1;
+            
+		}
+
+		.text {
+			font-weight: bold;
+			padding: 6px 8px 6px 16px;
+			text-decoration: none;
+			font-size: 30px;
+			font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+			color: #444444;
+			display: block;
+		}  
+
+		.sidebar {
+            height: 100%;
+            width: 20%;
+            position: fixed;
+            padding-top: 5%;
+            top: 0;
+            left: 0;
+            background-color: #eee;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            font-size: 20px;
+            text-align: center;
+            box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type=checkbox] {
+            transform: scale(2);
+            margin-left: 10px;
+        }
+
+        .button {
+            background-color: #0075FF;
+            color: #FFF;
+            font-size: 25px;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            margin-top: 30px;
+            width: 60%;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .reset:hover {
+            background-color: #005CC8;
+        }
+
+        .popup {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.5);
+			z-index: 1;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+            overflow: hidden;
+		}
+
+		.popup-content {
+            font-size: 40px; font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; 
+            color: #444444;
+			background-color: white;
+			padding: 20px;
+			border-radius: 10px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+			text-align: center;
+            overflow: hidden;
+		}
+
+		.popup h2 {
+			font-size: 60px;
+            margin-top: 20px;
+			margin-bottom: 40px;
+            margin-left: 50px;
+            margin-right: 50px;
+		}
+
+		.popup p {
+			font-size: 24px;
+			margin-bottom: 50px;
+		}
+
+        
+	</style>
+</head>
+<body>
+	<div class="sidebar">
+        <h1>Evaluation</h1>
+        <br/><br/><br/><br/>
+        <p class="text" id="eval">Value: 0</p>
+        <p class="text" id="nodes">Nodes: 0</p>
+        <p class="text" id="depth">Depth: 0</p>
+        <button class="button" id="reset">Reset</button>    
+        <br/><br/><br/><br/>
+        <input type="checkbox" id="enableEval" name="enableEval" checked>
+        <label for="enableEval" style="margin-left: 5px; font-size: 25px; font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; font-weight: bold; color: #444444; margin-top: 20px;">Enable Evaluation</label>
+      </div>      
+    <br/>
+    <div class="popup" style="display: none">
+		<div class="popup-content">
+			<h2>Game Over</h2>
+			<p>Winner: <span id="winner"></span></p>
+			<button class="button" onclick="resetBoard()">New Game</button>
+		</div>
+	</div>
+    <table class="board">
+        <tr>
+            <td id="r0c0" class="cell"></td>
+            <td id="r0c1" class="cell"></td>
+            <td id="r0c2" class="cell"></td>
+            <td id="r0c3" class="cell"></td>
+            <td id="r0c4" class="cell"></td>
+            <td id="r0c5" class="cell"></td>
+            <td id="r0c6" class="cell"></td>
+        </tr>
+        <tr>
+            <td id="r1c0" class="cell"></td>
+            <td id="r1c1" class="cell"></td>
+            <td id="r1c2" class="cell"></td>
+            <td id="r1c3" class="cell"></td>
+            <td id="r1c4" class="cell"></td>
+            <td id="r1c5" class="cell"></td>
+            <td id="r1c6" class="cell"></td>
+        </tr>
+        <tr>
+            <td id="r2c0" class="cell"></td>
+            <td id="r2c1" class="cell"></td>
+            <td id="r2c2" class="cell"></td>
+            <td id="r2c3" class="cell"></td>
+            <td id="r2c4" class="cell"></td>
+            <td id="r2c5" class="cell"></td>
+            <td id="r2c6" class="cell"></td>
+        </tr>
+        <tr>
+            <td id="r3c0" class="cell"></td>
+            <td id="r3c1" class="cell"></td>
+            <td id="r3c2" class="cell"></td>
+            <td id="r3c3" class="cell"></td>
+            <td id="r3c4" class="cell"></td>
+            <td id="r3c5" class="cell"></td>
+            <td id="r3c6" class="cell"></td>
+        </tr>
+        <tr>
+            <td id="r4c0" class="cell"></td>
+            <td id="r4c1" class="cell"></td>
+            <td id="r4c2" class="cell"></td>
+            <td id="r4c3" class="cell"></td>
+            <td id="r4c4" class="cell"></td>
+            <td id="r4c5" class="cell"></td>
+            <td id="r4c6" class="cell"></td>
+        </tr>
+        <tr>
+            <td id="r5c0" class="cell"></td>
+            <td id="r5c1" class="cell"></td>
+            <td id="r5c2" class="cell"></td>
+            <td id="r5c3" class="cell"></td>
+            <td id="r5c4" class="cell"></td>
+            <td id="r5c5" class="cell"></td>
+            <td id="r5c6" class="cell"></td>
+        </tr>
+    </table>
+  </body>
+  <script>
+    const COLUMNS = 7;
+    const ROWS = 6;
+    const PLAYER1 = 1;
+    const PLAYER2 = 2;
+    const EMPTY = 0;
+    const COLOR = ["yellowgreen", "orange"]
+    const DEPTH = 7;
+
+    document.getElementById("depth").innerHTML = "Depth: " + DEPTH;
+
+    let board = [];
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    let nodes = 0;
+
+    for (let i = 0; i < ROWS; i++) {
+        board.push([]);
+        for (let j = 0; j < COLUMNS; j++) {
+            board[i].push(EMPTY);
+        }
+    }
+
+    function getRow(b, col) {
+        for (let i = 0; i < ROWS; i++) {
+            if (b[i][col] === EMPTY) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function checkWin(b, piece) {
+        // Rows
+        for (let i = 0; i < COLUMNS - 3; i++) {
+            for (let j = 0; j < ROWS; j++) {
+                if (b[j][i] === piece && b[j][i + 1] === piece && b[j][i + 2] === piece && b[j][i + 3] === piece) {
+                    return true;
+                }
+            }
+        }
+        // Columns
+        for (let i = 0; i < COLUMNS; i++) {
+            for (let j = 0; j < ROWS - 3; j++) {
+                if (b[j][i] === piece && b[j + 1][i] === piece && b[j + 2][i] === piece && b[j + 3][i] === piece) {
+                    return true;
+                }
+            }
+        }
+        // Upper diagonals
+        for (let i = 0; i < COLUMNS - 3; i++) {
+            for (let j = 0; j < ROWS - 3; j++) {
+                if (b[j][i] === piece && b[j + 1][i + 1] === piece && b[j + 2][i + 2] === piece && b[j + 3][i + 3] === piece) {
+                    return true;
+                }
+            }
+        }
+        // Lower diagonals
+        for (let i = 0; i < COLUMNS - 3; i++) {
+            for (let j = 3; j < ROWS; j++) {
+                if (b[j][i] === piece && b[j - 1][i + 1] === piece && b[j - 2][i + 2] === piece && b[j - 3][i + 3] === piece) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function validMoves(b) {
+        moves = []
+        for(let i = 0; i < COLUMNS; i++) {
+            if(getRow(b, i) !== -1) {
+                moves.push(i);
+            }
+        }
+        return moves;
+    }
+
+    function updateBoard(row, col, piece) {
+        let curr = "r" + (ROWS - row - 1) + "c" + col;
+        var x = document.getElementById(curr);
+        x.style.backgroundColor = COLOR[piece - 1]
+    }
+
+
+    function count(curr, val) {
+        let result = 0;
+        for(let i = 0; i < curr.length; i++) {
+            if(curr[i] === val) {
+                result++;
+            }
+        }
+        return result;
+    }
+
+    function analyze4(curr) {
+        let result = 0;
+        if(count(curr, PLAYER1) === 4) {
+            return Infinity;
+        }
+        if(count(curr, PLAYER2) === 4) {
+            return -Infinity;
+        }
+        if(count(curr, PLAYER1) === 3 && count(curr, EMPTY) === 1) {
+            result += 5;
+        }
+        if(count(curr, PLAYER2) === 3 && count(curr, EMPTY) === 1) {
+            result -= 5;
+        }
+        if(count(curr, PLAYER1) === 2 && count(curr, EMPTY) === 2) {
+            result += 3;
+        }
+        if(count(curr, PLAYER2) === 2 && count(curr, EMPTY) === 2) {
+            result -= 3;
+        }
+
+        return result;
+    }
+
+
+    function evaluateBoard(b) {
+        let result = 0
+         // Rows
+         for (let i = 0; i < COLUMNS - 3; i++) {
+            for (let j = 0; j < ROWS; j++) {
+                curr = []
+                curr.push(b[j][i])
+                curr.push(b[j][i + 1])
+                curr.push(b[j][i + 2])
+                curr.push(b[j][i + 3])
+                result += analyze4(curr)
+            }
+        }
+        // Columns
+        for (let i = 0; i < COLUMNS; i++) {
+            for (let j = 0; j < ROWS - 3; j++) {
+                curr = []
+                curr.push(b[j][i])
+                curr.push(b[j + 1][i])
+                curr.push(b[j + 2][i])
+                curr.push(b[j + 3][i])
+                result += analyze4(curr)
+            }
+        }
+
+        // Upper diagonals
+        for (let i = 0; i < COLUMNS - 3; i++) {
+            for (let j = 0; j < ROWS - 3; j++) {
+                curr = []
+                curr.push(b[j][i])
+                curr.push(b[j + 1][i + 1])
+                curr.push(b[j + 2][i + 2])
+                curr.push(b[j + 3][i + 3])
+                result += analyze4(curr)
+            }
+        }
+
+        // Lower diagonals
+        for (let i = 0; i < COLUMNS - 3; i++) {
+            for (let j = 3; j < ROWS; j++) {
+                curr = []
+                curr.push(b[j][i])
+                curr.push(b[j - 1][i + 1])
+                curr.push(b[j - 2][i + 2])
+                curr.push(b[j - 3][i + 3])
+                result += analyze4(curr)
+            }
+        }
+
+        return result;
+    }
+
+    function copyArr(arr) {
+        let copy = []
+        for (let i = 0; i < ROWS; i++) {
+            copy.push([]);
+            for (let j = 0; j < COLUMNS; j++) {
+                copy[i].push(arr[i][j]);
+            }
+        }
+        return copy;
+    }
+
+    function alphabetasoft(node, depth, alpha, beta, maximizingPlayer) {
+        nodes++;
+        let moves = validMoves(node);
+        if(depth === 0 || checkWin(node, PLAYER1) || checkWin(node, PLAYER2) || moves.length === 0) {
+            if(checkWin(node, PLAYER1)) {
+                return [Infinity, -1];
+            }
+            else if(checkWin(node, PLAYER2)) {
+                return [-Infinity, -1];
+            } 
+            else if(depth != 0) {
+                    return [0, -1];
+            }
+            else {
+                return [evaluateBoard(node), -1];
+            }
+        }
+
+        else if(maximizingPlayer) {
+            let val = -Infinity;
+            let col = moves[0];
+            for(let i = 0; i < moves.length; i++) {
+                let copy = copyArr(node)
+                copy[getRow(copy, moves[i])][moves[i]] = PLAYER1;
+                newEval = alphabetasoft(copy, depth - 1, alpha, beta, false)[0];
+                if(newEval > val) {
+                    val = newEval;
+                    col = moves[i];
+                }
+                alpha = Math.max(val, alpha);
+                if(val >= beta) {
+                   break;
+                }
+            }
+            return [val, col];
+        } else {
+            let val = Infinity;
+            let col = moves[0]
+            for(let i = 0; i < moves.length; i++) {
+                let copy = copyArr(node)
+                copy[getRow(copy, moves[i])][moves[i]] = PLAYER2;
+                newEval = alphabetasoft(copy, depth - 1, alpha, beta, true)[0];
+                if(newEval < val) {
+                    val = newEval;
+                    col = moves[i];
+                }
+                beta = Math.min(val, beta);
+                if(val <= alpha) {
+                    break;
+                }
+            }
+            return [val, col];
+        }
+    }
+
+    
+    let turn = PLAYER1;
+    let isOver = false;
+    let hasPlayed = true;
+
+    function onClick(col) {
+        nodes = 0;
+        if(!isOver) {
+            if(getRow(board, col) === -1) {
+                return;
+            }
+            let row = getRow(board, col)
+            board[row][col] = turn;
+            isOver = checkWin(board, turn);
+            updateBoard(row, col, turn);
+            let isEnabled = document.getElementById("enableEval").checked;
+            if(isEnabled) {
+                let res = alphabetasoft(board, DEPTH, -Infinity, Infinity, 1 - turn % 2);
+                if(res[0] === Infinity) {
+                    document.getElementById("eval").innerHTML = "Value: inf";    
+                } 
+                else if(res[0] === -Infinity) {
+                    document.getElementById("eval").innerHTML = "Value: -inf";    
+                } else {
+                    document.getElementById("eval").innerHTML = "Value: " + res[0];         
+                }       
+            } else {
+                document.getElementById("eval").innerHTML = "Value: -";   
+            }
+            turn = PLAYER1 + PLAYER2 - turn;
+            if(isOver) {
+                document.getElementById("winner").innerHTML = "Player 1";
+                document.querySelector(".popup").style.display = "flex";
+            }
+        }
+        if(!isOver) {
+            nodes = 0;
+            let res = alphabetasoft(board, DEPTH, -Infinity, Infinity, false);
+            col = res[1];
+            let row = getRow(board, col);
+            board[row][col] = turn;
+            isOver = checkWin(board, turn);
+            updateBoard(row, col, turn);
+            let isEnabled = document.getElementById("enableEval").checked;
+            if(isEnabled) {
+                if(res[0] === Infinity) {
+                    document.getElementById("eval").innerHTML = "Value: inf";    
+                } 
+                else if(res[0] === -Infinity) {
+                    document.getElementById("eval").innerHTML = "Value: -inf";    
+                } else {
+                    document.getElementById("eval").innerHTML = "Value: " + res[0];         
+                }       
+            } else {
+                document.getElementById("eval").innerHTML = "Value: -";  
+            }
+            turn = PLAYER1 + PLAYER2 - turn;
+        }
+        
+        if(isOver) {
+                document.getElementById("winner").innerHTML = "Player 2";
+                document.querySelector(".popup").style.display = "flex";
+        }
+    }
+
+    async function updateNodes() {
+        while(true) {
+            await sleep(500);
+            document.getElementById("nodes").innerHTML = "Nodes: " + nodes
+        }
+    }
+
+    function resetBoard() {
+        for(let row = 0; row < ROWS; row++) {
+            for(let col = 0; col < COLUMNS; col++) {
+                if(board[row][col] !== EMPTY) {
+                    let curr = "r" + (ROWS - row - 1) + "c" + col;
+                    var x = document.getElementById(curr);
+                    x.style.backgroundColor = "white"
+                }
+                board[row][col] = EMPTY;
+            }
+        }
+        isOver = false
+        let isEnabled = document.getElementById("enableEval").checked;
+        if(isEnabled) {
+            document.getElementById("eval").innerHTML = "Value: 0";                
+        } else {
+            document.getElementById("eval").innerHTML = "Value: -";   
+        }
+        nodes = 0;
+        document.querySelector(".popup").style.display = "none";
+    }
+
+    document.querySelectorAll('td').forEach(cell => {
+        cell.addEventListener('click', evt => {
+                let col = parseInt(evt.target.id[3]);
+                onClick(col)                
+        }); 
+    });
+
+    document.getElementById("reset").onclick = resetBoard;
+
+    updateNodes();
+
+</script>
+</html>
